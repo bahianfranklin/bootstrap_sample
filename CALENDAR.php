@@ -6,18 +6,18 @@
     $success = "";
     $error = "";
 
-    // // ✅ make sure user is logged in
-    // if (!isset($_SESSION['user_id'])) {
-    //     header("Location: LOGIN.php");
-    //     exit();
-    // }
-    // $user_id = $_SESSION['user_id'];
+    // ✅ make sure user is logged in
+    if (!isset($_SESSION['user_id'])) {
+        header("Location: LOGIN.php");
+        exit();
+    }
+    $user_id = $_SESSION['user_id'];
 
-    // // ✅ Fetch logged-in user info
-    // $userQuery = $conn->prepare("SELECT * FROM users WHERE id = ?");
-    // $userQuery->bind_param("i", $user_id);
-    // $userQuery->execute();
-    // $user = $userQuery->get_result()->fetch_assoc();
+    // ✅ Fetch logged-in user info
+    $userQuery = $conn->prepare("SELECT * FROM users WHERE id = ?");
+    $userQuery->bind_param("i", $user_id);
+    $userQuery->execute();
+    $user = $userQuery->get_result()->fetch_assoc();
 
     // ✅ ADD EVENT
     if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['update_event']) && !isset($_POST['delete_event']) && (!isset($_POST['action']) || $_POST['action'] !== 'delete')) {
@@ -276,19 +276,10 @@
                                     <a class="nav-link" href="WORK_RESTDAY">Work On Restday</a>
                                 </nav>
                             </div>
-                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseUsersInfo" aria-expanded="false" aria-controls="collapseUsersInfo">
-                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
+                            <a class="nav-link" href="USER_MAINTENANCE.php">
+                                <div class="sb-nav-link-icon"><i class="fas fa-building"></i></div>
                                 Users Info
-                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                             </a>
-                            <div class="collapse" id="collapseUsersInfo" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
-                                <nav class="sb-sidenav-menu-nested nav">
-                                    <a class="nav-link" href="#">User Management</a>
-                                    <a class="nav-link" href="#">Schedules</a>
-                                    <a class="nav-link" href="#">Leave Credit</a>
-                                    <a class="nav-link" href="#">Approvers Maintance</a>
-                                </nav>
-                            </div>
                             <a class="nav-link" href="DIRECTORY.php">
                                 <div class="sb-nav-link-icon"><i class="fas fa-building"></i></div>
                                 Directory
@@ -305,23 +296,10 @@
                                 <div class="sb-nav-link-icon"><i class="fas fa-clipboard-list"></i></div>
                                 Log History 
                             </a>
-                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseMaintenace" aria-expanded="false" aria-controls="collapseMaintenace">
+                            <a class="nav-link" href="MAINTENANCE.php">
                                 <div class="sb-nav-link-icon"><i class="fas fa-toolbox"></i></div>
                                 Maintenance
-                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                             </a>
-                            <div class="collapse" id="collapseMaintenace" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
-                                <nav class="sb-sidenav-menu-nested nav">
-                                    <a class="nav-link" href="">Branch</a>
-                                    <a class="nav-link" href="">Department</a>
-                                    <a class="nav-link" href="">Position</a>
-                                    <a class="nav-link" href="">Level</a>
-                                    <a class="nav-link" href="">Tax Category</a>
-                                    <a class="nav-link" href="">Status</a>
-                                    <a class="nav-link" href="">Payroll Period</a>
-                                    <a class="nav-link" href="">Footer Maintenance</a>
-                                </nav>
-                            </div>
                         </div>
                     </div>
                     <div class="sb-sidenav-footer">

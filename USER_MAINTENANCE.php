@@ -1,42 +1,24 @@
-<?php
-    session_start();
-    require 'db.php';
-    if (!isset($_SESSION['user'])) {
+<?php 
+   ob_start();                // ✅ Start output buffering
+   require 'db.php';
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    $activeTab = $_GET['tab'] ?? 'user_management';
+
+    // ✅ make sure user is logged in
+    if (!isset($_SESSION['user_id'])) {
         header("Location: LOGIN.php");
         exit();
     }
-    $user = $_SESSION['user'];
     $user_id = $_SESSION['user_id'];
 
-    // ✅ Fetch all active users (optional: only show active)
-    $search = isset($_GET['search']) ? '%' . $_GET['search'] . '%' : '%';
-    $role = isset($_GET['role']) && $_GET['role'] !== '' ? $_GET['role'] : null;
-
-    $sql = "SELECT id, name, address, contact, email, role, profile_pic 
-            FROM users 
-            WHERE status = 'active' AND name LIKE ?";
-
-    $params = [$search];
-    $types = "s";
-
-    if ($role) {
-        $sql .= " AND role = ?";
-        $params[] = $role;
-        $types .= "s";
-    }
-
-    $sql .= " ORDER BY name ASC";
-
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param($types, ...$params);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    $userCount = $result->num_rows;
-
-    $countQuery = $conn->query("SELECT COUNT(*) as total FROM users WHERE status = 'active'");
-    $totalEmployees = $countQuery->fetch_assoc()['total'];
-
+    // ✅ Fetch logged-in user info
+    $userQuery = $conn->prepare("SELECT * FROM users WHERE id = ?");
+    $userQuery->bind_param("i", $user_id);
+    $userQuery->execute();
+    $user = $userQuery->get_result()->fetch_assoc();
 ?>
 
 <!DOCTYPE html>
@@ -47,53 +29,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="description" content="" />
         <meta name="author" content="" />
-        <title>Companyt Directory</title>
+        <title>Dashboard - SAMPLE SYSTEM</title>
+        <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
         <link href="css/styles.css" rel="stylesheet" />
         <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
     </head>
-
-    <style>
-            body {
-                background: #f8f9fa;
-            }
-            /* Sidebar + Layout */
-            #layoutSidenav {
-                display: flex;
-            }
-            #layoutSidenav_nav {
-                width: 250px;
-                flex-shrink: 0;
-                transition: margin-left 0.3s ease;
-            }
-            #layoutSidenav_content {
-                flex-grow: 1;
-                min-width: 0;
-                transition: margin-left 0.3s ease;
-                margin: 30px 30px 30px 30px;  
-                /* left = sidebar (250px) + gap (20px) */
-            }
-            /* Directory cards */
-            .directory-card {
-                border-radius: 12px;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-                transition: transform 0.2s ease;
-                padding: 20px;
-                height: 100%;
-            }
-            .directory-card:hover {
-                transform: translateY(-3px);
-            }
-            .profile-pic {
-                width: 100px;
-                height: 100px;
-                object-fit: cover;
-                border-radius: 50%;
-                border: 2px solid #ddd;
-            }
-        </style>
-
-    <body>
-         <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+    <body class="sb-nav-fixed">
+        <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
             <!-- Navbar Brand-->
             <a class="navbar-brand ps-3" href="INDEX.php">Sample System Logo</a>
             <!-- Sidebar Toggle-->
@@ -142,7 +84,7 @@
                 <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
                     <div class="sb-sidenav-menu">
                         <div class="nav">
-                            <a class="nav-link" href="index.php">
+                            <a class="nav-link" href="INDEX.php">
                                 <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                                 Dashboard
                             </a>
@@ -182,7 +124,7 @@
                                 <div class="sb-nav-link-icon"><i class="fas fa-building"></i></div>
                                 Users Info
                             </a>
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="DIRECTORY.php">
                                 <div class="sb-nav-link-icon"><i class="fas fa-building"></i></div>
                                 Directory
                             </a>
@@ -210,90 +152,57 @@
                     </div>
                 </nav>
             </div>
-             <div id="layoutSidenav_content">
-        <main>
-        <h2 class="mb-4 text-left">Company Directory</h2>
-        <br>
-        <form method="GET" class="row mb-4">
-            <div class="col-md-6">
-                <input type="text" name="search" class="form-control" placeholder="Search by name" value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>">
-            </div>
-            <div class="col-md-4">
-                <select name="role" class="form-select">
-                    <option value="">All Roles</option>
-                    <option value="admin" <?= (isset($_GET['role']) && $_GET['role'] === 'admin') ? 'selected' : '' ?>>Admin</option>
-                    <option value="superadmin" <?= (isset($_GET['role']) && $_GET['role'] === 'superadmin') ? 'selected' : '' ?>>Superadmin</option>
-                    <option value="user" <?= (isset($_GET['role']) && $_GET['role'] === 'user') ? 'selected' : '' ?>>User</option>
-                    <!-- Add other roles as needed -->
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">Search</button>
-            </div>
-        </form>
-            <p class="text-muted">No. of Records Found: <strong><?= $userCount ?></strong></p>
+            <div id="layoutSidenav_content">
+                <main>
+                    <div class="container-fluid px-4">
+                        </br>
+                        <h3 class="m-0">User Maintenance</h3>
+                        <br>
+                        <ul class="nav nav-tabs" id="maintenanceTabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link <?= $activeTab=='user_management' ? 'active' : '' ?>" data-bs-toggle="tab" href="#user_management">User Management</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?= $activeTab=='schedules' ? 'active' : '' ?>" data-bs-toggle="tab" href="#schedules">Schedules</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?= $activeTab=='leave_credit' ? 'active' : '' ?>" data-bs-toggle="tab" href="#leave_credit">Leave Credit</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?= $activeTab=='approver_maintenance' ? 'active' : '' ?>" data-bs-toggle="tab" href="#approver_maintenance">Approvers Maintenance</a>
+                            </li>
+                        </ul>
 
-        <div class="row g-4">
-            <?php while($row = $result->fetch_assoc()): ?>
-                <div class="col-md-4">
-                    <div class="card directory-card text-start p-4">
-                        <img src="<?= !empty($row['profile_pic']) ? 'uploads/' . $row['profile_pic'] : 'uploads/default.png' ?>" 
-                             class="profile-pic mx-auto" alt="Profile">
-                        <h5><?= htmlspecialchars($row['name']) ?></h5>
-                        <p class="text-muted"><?= htmlspecialchars($row['role']) ?></p>
-                        <p>
-                            📧 
-                            <span id="email-<?= $row['id'] ?>"><?= htmlspecialchars($row['email']) ?></span>
-                            <button class="btn btn-sm btn-outline-secondary copy-btn" 
-                                    data-email="<?= htmlspecialchars($row['email']) ?>">
-                                <i class="fa-regular fa-copy"></i>
-                            </button>
-                        </p>
-                        <script>
-                            document.querySelectorAll('.copy-btn').forEach(button => {
-                                button.addEventListener('click', () => {
-                                    const email = button.getAttribute('data-email');
-                                    navigator.clipboard.writeText(email).then(() => {
-                                        // Optional: show feedback
-                                        button.innerHTML = '✔'; // check mark
-                                        setTimeout(() => {
-                                            button.innerHTML = '<i class="fa-regular fa-copy"></i>';
-                                        }, 1000);
-                                    }).catch(err => {
-                                        alert('Failed to copy email');
-                                    });
-                                });
-                            });
-                        </script>
-                        <p>📞 <span id="contact-<?= $row['id'] ?>"><?= htmlspecialchars($row['contact']) ?></span>
-                            <button class="btn btn-sm btn-outline-secondary copy-btn" 
-                                    data-contact="<?= htmlspecialchars($row['contact']) ?>">
-                                <i class="fa-regular fa-copy"></i>
-                            </button>
-                        </p>
-                        <script>
-                            document.querySelectorAll('.copy-btn').forEach(button => {
-                                button.addEventListener('click', () => {
-                                    const contact = button.getAttribute('data-contact');
-                                    navigator.clipboard.writeText(contact).then(() => {
-                                        // Optional: show feedback
-                                        button.innerHTML = '✔'; // check mark
-                                        setTimeout(() => {
-                                            button.innerHTML = '<i class="fa-regular fa-copy"></i>';
-                                        }, 1000);
-                                    }).catch(err => {
-                                        alert('Failed to copy contact');
-                                    });
-                                });
-                            });
-                        </script>
-                        <p>🏠 <small class="text-secondary"><?= htmlspecialchars($row['address']) ?></small></p>
+                        <div class="tab-content mt-3">
+                            <div class="tab-pane fade <?= $activeTab=='user_management' ? 'show active' : '' ?>" id="user_management">
+                                <?php include 'USERS.php'; ?>
+                            </div>
+                            <div class="tab-pane fade <?= $activeTab=='schedules' ? 'show active' : '' ?>" id="schedules">
+                                <?php include 'SCHEDULES.php'; ?>
+                            </div>
+                            <div class="tab-pane fade <?= $activeTab=='leave_credit' ? 'show active' : '' ?>" id="leave_credit">
+                                <?php include 'LEAVE_CREDIT.php'; ?>
+                            </div>
+                            <div class="tab-pane fade <?= $activeTab=='approver_maintenance' ? 'show active' : '' ?>" id="approver_maintenance">
+                                <?php include 'APPROVER_MAINTENANCE.php'; ?>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            <?php endwhile; ?>
-        </div>
-    </div>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-        <script src="js/scripts.js"></script>
+                </main>
+            </div>
+
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    const body = document.body;
+                    const sidebarToggle = document.querySelector("#sidebarToggle");
+
+                    if (sidebarToggle) {
+                        sidebarToggle.addEventListener("click", function (e) {
+                            e.preventDefault();
+                            body.classList.toggle("sb-sidenav-toggled");
+                        });
+                    }
+                });
+            </script>
     </body>
 </html>
