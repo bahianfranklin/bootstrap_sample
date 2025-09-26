@@ -79,6 +79,7 @@
                         </li>
 
                         <li><hr class="dropdown-divider" /></li>
+                        <li><a class="dropdown-item" href="EDIT_USER_PROFILE.php?id=<?= $user['id'] ?>">Edit Profile</a></li>
                         <li><a class="dropdown-item" href="#!">Settings</a></li>
                         <li><a class="dropdown-item" href="#!">Activity Log</a></li>
                         <li><hr class="dropdown-divider" /></li>
@@ -109,7 +110,7 @@
                                     <a class="nav-link" href="CHANGE_SCHEDULE.PHP">Change Schedule</a>
                                     <a class="nav-link" href="FAILURE_CLOCK.PHP">Failure to Clock In/Out</a>
                                     <a class="nav-link" href="CLOCK_ALTERATION.PHP">Clock Alteration</a>
-                                    <a class="nav-link" href="WORK_RESTDAY">Work On Restday</a>
+                                    <a class="nav-link" href="WORK_RESTDAY.PHP">Work On Restday</a>
                                 </nav>
                             </div>
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseApproving" aria-expanded="false" aria-controls="collapseApproving">
@@ -119,13 +120,13 @@
                             </a>
                             <div class="collapse" id="collapseApproving" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
                                 <nav class="sb-sidenav-menu-nested nav">
-                                    <a class="nav-link" href="LEAVE_APPLICATION.PHP">Leave Application</a>
-                                    <a class="nav-link" href="OVERTIME.PHP">Overtime</a>
-                                    <a class="nav-link" href="OFFICIAL_BUSINESS.PHP">Official Business</a>
-                                    <a class="nav-link" href="CHANGE_SCHEDULE.PHP">Change Schedule</a>
-                                    <a class="nav-link" href="FAILURE_CLOCK.PHP">Failure to Clock In/Out</a>
-                                    <a class="nav-link" href="CLOCK_ALTERATION.PHP">Clock Alteration</a>
-                                    <a class="nav-link" href="WORK_RESTDAY">Work On Restday</a>
+                                    <a class="nav-link" href="PENDING_LEAVES.PHP">Leave Application</a>
+                                    <a class="nav-link" href="APPROVER_OVERTIME.PHP">Overtime</a>
+                                    <a class="nav-link" href="APPROVER_OFFICIAL_BUSINESS.PHP">Official Business</a>
+                                    <a class="nav-link" href="APPROVER_CHANGE_SCHEDULE.PHP">Change Schedule</a>
+                                    <a class="nav-link" href="APPROVER_FAILURE_CLOCK.PHP">Failure to Clock In/Out</a>
+                                    <a class="nav-link" href="APPROVER_CLOCK_ALTERATION.PHP">Clock Alteration</a>
+                                    <a class="nav-link" href="APPROVER_WORK_RESTDAY">Work On Restday</a>
                                 </nav>
                             </div>
                             <a class="nav-link" href="USER_MAINTENANCE.php">
