@@ -126,7 +126,7 @@
                                     <a class="nav-link" href="APPROVER_CHANGE_SCHEDULE.PHP">Change Schedule</a>
                                     <a class="nav-link" href="APPROVER_FAILURE_CLOCK.PHP">Failure to Clock In/Out</a>
                                     <a class="nav-link" href="APPROVER_CLOCK_ALTERATION.PHP">Clock Alteration</a>
-                                    <a class="nav-link" href="APPROVER_WORK_RESTDAY">Work On Restday</a>
+                                    <a class="nav-link" href="APPROVER_WORK_RESTDAY.PHP">Work On Restday</a>
                                 </nav>
                             </div>
                             <a class="nav-link" href="USER_MAINTENANCE.php">

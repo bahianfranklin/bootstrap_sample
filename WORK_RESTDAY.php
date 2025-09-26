@@ -214,7 +214,7 @@
                                         <a class="nav-link" href="APPROVER_CHANGE_SCHEDULE.PHP">Change Schedule</a>
                                         <a class="nav-link" href="APPROVER_FAILURE_CLOCK.PHP">Failure to Clock In/Out</a>
                                         <a class="nav-link" href="APPROVER_CLOCK_ALTERATION.PHP">Clock Alteration</a>
-                                        <a class="nav-link" href="APPROVER_WORK_RESTDAY">Work On Restday</a>
+                                        <a class="nav-link" href="APPROVER_WORK_RESTDAY.PHP">Work On Restday</a>
                                     </nav>
                                 </div>
                                 <a class="nav-link" href="USER_MAINTENANCE.php">
@@ -433,6 +433,20 @@
                 time_24hr: false
             });
         </script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>`
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const body = document.body;
+                const sidebarToggle = document.querySelector("#sidebarToggle");
+
+                if (sidebarToggle) {
+                    sidebarToggle.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    body.classList.toggle("sb-sidenav-toggled");
+                    });
+                }
+            });
+        </script>
     </body>
 </html>
