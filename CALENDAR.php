@@ -144,10 +144,6 @@
             transition: margin 0.3s ease;
             padding: 20px;
             box-sizing: border-box;
-
-            /* top | right | bottom | left */
-            margin: 20px 20px 20px 20px;  
-            /* left = sidebar (250px) + gap (20px) */
         }
 
         /* Calendar container */
@@ -311,6 +307,7 @@
                 <br>
         <div id="layoutSidenav_content">
             <main>
+                <div class="container mt-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h2 class="mb-0">Company Calendar</h2>
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEventModal">➕ Add Event</button>

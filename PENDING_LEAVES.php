@@ -61,6 +61,44 @@
     $stmt2->bind_param("i", $approver_id);
     $stmt2->execute();
     $approved = $stmt2->get_result();
+
+    // 🔹 Rejected requests
+    $sqlRejected = "
+        SELECT lr.application_no, u.name AS employee, d.department, 
+            lr.leave_type, lr.date_from, lr.date_to, lr.status, lr.date_action, lr.remarks
+        FROM leave_requests lr
+        JOIN users u ON lr.user_id = u.id
+        JOIN work_details wd ON u.id = wd.user_id
+        JOIN departments d ON wd.department = d.department
+        JOIN approver_assignments aa ON aa.department_id = d.id
+        WHERE aa.user_id = ?
+        AND lr.status = 'Rejected'
+        ORDER BY lr.date_action DESC";
+
+    $stmt3 = $conn->prepare($sqlRejected);
+    $stmt3->bind_param("i", $approver_id);
+    $stmt3->execute();
+    $rejected = $stmt3->get_result();
+
+    // Count pending leave requests
+    $sqlPendingCount = "
+        SELECT COUNT(*) AS pending_count
+        FROM leave_requests AS lr
+        INNER JOIN users AS u ON lr.user_id = u.id
+        INNER JOIN work_details AS wd ON u.id = wd.user_id
+        INNER JOIN departments AS d ON d.department = wd.department
+        INNER JOIN approver_assignments AS aa ON aa.department_id = d.id
+        WHERE aa.user_id = ?
+        AND lr.status = 'Pending'
+    ";
+
+    $stmtCount = $conn->prepare($sqlPendingCount);
+    $stmtCount->bind_param("i", $approver_id);
+    $stmtCount->execute();
+    $countResult = $stmtCount->get_result();
+    $countRow = $countResult->fetch_assoc();
+    $pendingCount = $countRow['pending_count'];
+
 ?>
 <!DOCTYPE html>
     <head>
@@ -199,7 +237,7 @@
             <br>
             <!-- Page Header -->
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3>Leaves (PENDING | APPROVED)</h3>
+                <h3>Leaves (PENDING: <?= $pendingCount ?> | APPROVED | REJECTED)</h3>
             </div>
 
             <!-- Pending Requests -->
@@ -296,10 +334,51 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Rejected Requests -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-danger text-white fw-bold">
+                    Rejected Leave Requests
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Application No</th>
+                                    <th>Employee</th>
+                                    <th>Department</th>
+                                    <th>Leave Type</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Status</th>
+                                    <th>Date Action</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php while ($row = $rejected->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?= $row['application_no'] ?></td>
+                                    <td><?= $row['employee'] ?></td>
+                                    <td><?= $row['department'] ?></td>
+                                    <td><?= $row['leave_type'] ?></td>
+                                    <td><?= $row['date_from'] ?></td>
+                                    <td><?= $row['date_to'] ?></td>
+                                    <td><span class="badge bg-danger"><?= $row['status'] ?></span></td>
+                                    <td><?= $row['date_action'] ?></td>
+                                    <td><?= $row['remarks'] ?></td>
+                                </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             </main>
         </div>
         <br>
-
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
         <script>
             document.addEventListener("DOMContentLoaded", function () {

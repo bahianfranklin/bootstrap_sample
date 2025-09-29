@@ -63,8 +63,8 @@
         <link rel="stylesheet" href="style.css">
     </head>
     <body class="d-flex flex-column min-vh-100 bg-primary">
-        <div id="layoutAuthentication">
-            <div id="layoutAuthentication_content">
+        <div id="layoutAuthentication" class="d-flex flex-column flex-grow-1">
+            <div id="layoutAuthentication_content" class="flex-grow-1">
                 <main>
                     <div class="container">
                         <div class="row justify-content-center">
@@ -115,8 +115,6 @@
                     </div>
                 </main>
             </div>
-            </br>
-            </br>
             <div id="layoutAuthentication_footer">
                 <footer class="py-4 bg-light mt-auto">
                     <div class="container-fluid px-4">

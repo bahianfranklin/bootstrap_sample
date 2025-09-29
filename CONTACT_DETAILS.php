@@ -1,4 +1,5 @@
 <?php
+    session_start(); // ✅ Required to access $_SESSION
     require 'CONFIG.php';
 
     //Make sure user is logged in
@@ -8,6 +9,13 @@
     }
 
     $user_id = $_SESSION['user_id'];  // ✅ define it here
+
+    // Fetch current user info for profile display
+    $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $userResult = $stmt->get_result();
+    $user = $userResult->fetch_assoc();
 
     // Get search keyword and date range from GET
     $search = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -118,10 +126,15 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta charset="UTF-8">
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <title>Contacts Details</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+        <link href="css/styles.css" rel="stylesheet" />
+        <!-- include Flatpickr CSS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        <!-- FontAwesome 6.4.0 CDN for icons -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     </head>
     <body class="sb-nav-fixed">
             <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
@@ -160,6 +173,7 @@
                             </li>
 
                             <li><hr class="dropdown-divider" /></li>
+                            <li><a class="dropdown-item" href="EDIT_USER_PROFILE.php?id=<?= $user['id'] ?>">Edit Profile</a></li>
                             <li><a class="dropdown-item" href="#!">Settings</a></li>
                             <li><a class="dropdown-item" href="#!">Activity Log</a></li>
                             <li><hr class="dropdown-divider" /></li>
@@ -173,7 +187,7 @@
                     <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
                         <div class="sb-sidenav-menu">
                             <div class="nav">
-                                <a class="nav-link" href="index.php">
+                                <a class="nav-link" href="INDEX.php">
                                     <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                                     Dashboard
                                 </a>
@@ -190,7 +204,7 @@
                                         <a class="nav-link" href="CHANGE_SCHEDULE.PHP">Change Schedule</a>
                                         <a class="nav-link" href="FAILURE_CLOCK.PHP">Failure to Clock In/Out</a>
                                         <a class="nav-link" href="CLOCK_ALTERATION.PHP">Clock Alteration</a>
-                                        <a class="nav-link" href="WORK_RESTDAY">Work On Restday</a>
+                                        <a class="nav-link" href="WORK_RESTDAY.PHP">Work On Restday</a>
                                     </nav>
                                 </div>
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseApproving" aria-expanded="false" aria-controls="collapseApproving">
@@ -200,28 +214,19 @@
                                 </a>
                                 <div class="collapse" id="collapseApproving" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
                                     <nav class="sb-sidenav-menu-nested nav">
-                                        <a class="nav-link" href="LEAVE_APPLICATION.PHP">Leave Application</a>
-                                        <a class="nav-link" href="OVERTIME.PHP">Overtime</a>
-                                        <a class="nav-link" href="OFFICIAL_BUSINESS.PHP">Official Business</a>
-                                        <a class="nav-link" href="CHANGE_SCHEDULE.PHP">Change Schedule</a>
-                                        <a class="nav-link" href="FAILURE_CLOCK.PHP">Failure to Clock In/Out</a>
-                                        <a class="nav-link" href="CLOCK_ALTERATION.PHP">Clock Alteration</a>
-                                        <a class="nav-link" href="WORK_RESTDAY">Work On Restday</a>
+                                        <a class="nav-link" href="PENDING_LEAVES.PHP">Leave Application</a>
+                                        <a class="nav-link" href="APPROVER_OVERTIME.PHP">Overtime</a>
+                                        <a class="nav-link" href="APPROVER_OFFICIAL_BUSINESS.PHP">Official Business</a>
+                                        <a class="nav-link" href="APPROVER_CHANGE_SCHEDULE.PHP">Change Schedule</a>
+                                        <a class="nav-link" href="APPROVER_FAILURE_CLOCK.PHP">Failure to Clock In/Out</a>
+                                        <a class="nav-link" href="APPROVER_CLOCK_ALTERATION.PHP">Clock Alteration</a>
+                                        <a class="nav-link" href="APPROVER_WORK_RESTDAY.PHP">Work On Restday</a>
                                     </nav>
                                 </div>
-                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseUsersInfo" aria-expanded="false" aria-controls="collapseUsersInfo">
-                                    <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
+                                <a class="nav-link" href="USER_MAINTENANCE.php">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-building"></i></div>
                                     Users Info
-                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                                 </a>
-                                <div class="collapse" id="collapseUsersInfo" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
-                                    <nav class="sb-sidenav-menu-nested nav">
-                                        <a class="nav-link" href="#">User Management</a>
-                                        <a class="nav-link" href="#">Schedules</a>
-                                        <a class="nav-link" href="#">Leave Credit</a>
-                                        <a class="nav-link" href="#">Approvers Maintance</a>
-                                    </nav>
-                                </div>
                                 <a class="nav-link" href="DIRECTORY.php">
                                     <div class="sb-nav-link-icon"><i class="fas fa-building"></i></div>
                                     Directory
@@ -238,23 +243,10 @@
                                     <div class="sb-nav-link-icon"><i class="fas fa-clipboard-list"></i></div>
                                     Log History 
                                 </a>
-                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseMaintenace" aria-expanded="false" aria-controls="collapseMaintenace">
+                                <a class="nav-link" href="MAINTENANCE.php">
                                     <div class="sb-nav-link-icon"><i class="fas fa-toolbox"></i></div>
                                     Maintenance
-                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                                 </a>
-                                <div class="collapse" id="collapseMaintenace" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
-                                    <nav class="sb-sidenav-menu-nested nav">
-                                        <a class="nav-link" href="">Branch</a>
-                                        <a class="nav-link" href="">Department</a>
-                                        <a class="nav-link" href="">Position</a>
-                                        <a class="nav-link" href="">Level</a>
-                                        <a class="nav-link" href="">Tax Category</a>
-                                        <a class="nav-link" href="">Status</a>
-                                        <a class="nav-link" href="">Payroll Period</a>
-                                        <a class="nav-link" href="">Footer Maintenance</a>
-                                    </nav>
-                                </div>
                             </div>
                         </div>
                         <div class="sb-sidenav-footer">
@@ -263,10 +255,10 @@
                         </div>
                     </nav>
                 </div>
-        
-            
+
         <div id="layoutSidenav_content">
             <main>
+                <div class="container mt-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3 class="m-0">Contacts Details</h3>
 
@@ -276,129 +268,129 @@
                     </button>
                 </div>
 
-            <!-- Search Form -->
-            <form method="get" class="mb-3 d-flex">
-                <input type="text" name="search" class="form-control me-2" 
-                    placeholder="Search by name, address and contact..."
-                    value="<?= htmlspecialchars($search) ?>">
-                <button type="submit" class="btn btn-primary">Search</button>
-                <a href="contact_details.php" class="btn btn-secondary ms-2">Reset</a>
-            </form>
+                <!-- Search Form -->
+                <form method="get" class="mb-3 d-flex">
+                    <input type="text" name="search" class="form-control me-2" 
+                        placeholder="Search by name, address and contact..."
+                        value="<?= htmlspecialchars($search) ?>">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                    <a href="contact_details.php" class="btn btn-secondary ms-2">Reset</a>
+                </form>
 
-            <?php if (!empty($currentRecords)): ?>
-                <table class="table table-striped table-bordered">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>Address</th>
-                            <th>Contact No</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody> 
-                    <?php foreach ($currentRecords as $i => $row): ?>
-                        <tr>
-                            <td><?= $offset + $i + 1 ?></td>
-                            <td><?= htmlspecialchars($row['fullname']) ?></td>
-                            <td><?= htmlspecialchars($row['address']) ?></td>
-                            <td><?= htmlspecialchars($row['contact_no']) ?></td>
-                            <td>
-                                <!-- View Modal Trigger -->
-                                <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#viewModal<?= $row['id'] ?>">
-                                    <i class="fa fa-eye"></i>
-                                </button>
-                                <!-- Edit Modal Trigger -->
-                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">
-                                    <i class="fa fa-pen"></i>
-                                </button>
-                                <!-- Delete Modal Trigger -->
-                                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal<?= $row['id'] ?>">
-                                    <i class="fa fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
+                <?php if (!empty($currentRecords)): ?>
+                    <table class="table table-striped table-bordered">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Contact No</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody> 
+                        <?php foreach ($currentRecords as $i => $row): ?>
+                            <tr>
+                                <td><?= $offset + $i + 1 ?></td>
+                                <td><?= htmlspecialchars($row['fullname']) ?></td>
+                                <td><?= htmlspecialchars($row['address']) ?></td>
+                                <td><?= htmlspecialchars($row['contact_no']) ?></td>
+                                <td>
+                                    <!-- View Modal Trigger -->
+                                    <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#viewModal<?= $row['id'] ?>">
+                                        <i class="fa fa-eye"></i>
+                                    </button>
+                                    <!-- Edit Modal Trigger -->
+                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">
+                                        <i class="fa fa-pen"></i>
+                                    </button>
+                                    <!-- Delete Modal Trigger -->
+                                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal<?= $row['id'] ?>">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
 
-                        <!-- View Modal -->
-                        <div class="modal fade" id="viewModal<?= $row['id'] ?>" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                <div class="modal-header bg-info text-white">
-                                    <h5 class="modal-title">View Contact</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <p><b>Name:</b> <?= htmlspecialchars($row['fullname']) ?></p>
-                                    <p><b>Address:</b> <?= htmlspecialchars($row['address']) ?></p>
-                                    <p><b>Contact:</b> <?= htmlspecialchars($row['contact_no']) ?></p>
-                                </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    <!-- Edit Modal -->
-                        <div class="modal fade" id="editModal<?= $row['id'] ?>" tabindex="-1" aria-labelledby="editModalLabel<?= $row['id'] ?>" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <form method="post" action="">
-                                        <input type="hidden" name="action" value="edit">
-                                        <input type="hidden" name="id" value="<?= $row['id'] ?>">
-
-                                        <div class="modal-header bg-primary text-white">
-                                            <h5 class="modal-title" id="editModalLabel<?= $row['id'] ?>">Edit Contact</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-
-                                        <div class="modal-body">
-                                            <div class="mb-3">
-                                                <label for="fullname">Full Name</label>
-                                                <input type="text" id="fullname" name="fullname" value="<?= htmlspecialchars($row['fullname']) ?>" class="form-control" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="address">Address</label>
-                                                <input type="text" id="address" name="address" value="<?= htmlspecialchars($row['address']) ?>" class="form-control" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="contact_no">Contact No</label>
-                                                <input type="text" id="contact_no" name="contact_no" value="<?= htmlspecialchars($row['contact_no']) ?>" class="form-control" required>
-                                            </div>
-                                        </div>
-
-                                        <div class="modal-footer">
-                                            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                            <button type="submit" class="btn btn-primary">Update</button>
-                                        </div>
-                                    </form>
+                            <!-- View Modal -->
+                            <div class="modal fade" id="viewModal<?= $row['id'] ?>" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                    <div class="modal-header bg-info text-white">
+                                        <h5 class="modal-title">View Contact</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p><b>Name:</b> <?= htmlspecialchars($row['fullname']) ?></p>
+                                        <p><b>Address:</b> <?= htmlspecialchars($row['address']) ?></p>
+                                        <p><b>Contact:</b> <?= htmlspecialchars($row['contact_no']) ?></p>
+                                    </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+
+                            <!-- Edit Modal -->
+                            <div class="modal fade" id="editModal<?= $row['id'] ?>" tabindex="-1" aria-labelledby="editModalLabel<?= $row['id'] ?>" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form method="post" action="">
+                                            <input type="hidden" name="action" value="edit">
+                                            <input type="hidden" name="id" value="<?= $row['id'] ?>">
+
+                                            <div class="modal-header bg-primary text-white">
+                                                <h5 class="modal-title" id="editModalLabel<?= $row['id'] ?>">Edit Contact</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label for="fullname">Full Name</label>
+                                                    <input type="text" id="fullname" name="fullname" value="<?= htmlspecialchars($row['fullname']) ?>" class="form-control" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="address">Address</label>
+                                                    <input type="text" id="address" name="address" value="<?= htmlspecialchars($row['address']) ?>" class="form-control" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="contact_no">Contact No</label>
+                                                    <input type="text" id="contact_no" name="contact_no" value="<?= htmlspecialchars($row['contact_no']) ?>" class="form-control" required>
+                                                </div>
+                                            </div>
+
+                                            <div class="modal-footer">
+                                                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary">Update</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         
-                        <!-- Delete Modal -->
-                        <div class="modal fade" id="deleteModal<?= $row['id'] ?>" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                            <form method="post" action="">
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                                <div class="modal-header bg-danger text-white">
-                                <h5 class="modal-title">Confirm Delete</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <!-- Delete Modal -->
+                            <div class="modal fade" id="deleteModal<?= $row['id'] ?>" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                <form method="post" action="">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                                    <div class="modal-header bg-danger text-white">
+                                    <h5 class="modal-title">Confirm Delete</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                    Are you sure you want to delete <b><?= htmlspecialchars($row['fullname']) ?></b>?
+                                    </div>
+                                    <div class="modal-footer">
+                                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                    </div>
+                                </form>
                                 </div>
-                                <div class="modal-body">
-                                Are you sure you want to delete <b><?= htmlspecialchars($row['fullname']) ?></b>?
-                                </div>
-                                <div class="modal-footer">
-                                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-danger">Delete</button>
-                                </div>
-                            </form>
                             </div>
-                        </div>
-                        </div>
+                            </div>
 
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
 
                 <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap"> 
                     <!-- ✅ Pagination controls-->
@@ -477,7 +469,7 @@
                                 <option value="pdf">PDF</option>
                             </select>
                         </label>
-                    </form>
+                    </form>               
             </div>
         <?php else: ?>
             <p>No records found.</p>
@@ -514,11 +506,10 @@
             </form>
             </div>
         </div>
+        </main>
         </div>
-        <a href="view.php" class="btn btn-primary mt-3">BACK</a>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-        
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>   
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 const body = document.body;

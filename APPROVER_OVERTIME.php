@@ -75,6 +75,37 @@
     $stmt2->bind_param("i", $approver_id);
     $stmt2->execute();
     $approved = $stmt2->get_result();
+
+    /**
+     * 🔹 Rejected Overtime Requests
+     */
+    $sqlRejected = "
+        SELECT 
+            ot.application_no,
+            u.name AS employee,
+            d.department,
+            ot.date,
+            ot.from_time,
+            ot.to_time,
+            ot.purpose,
+            ot.work_schedule,
+            ot.status,
+            ot.datetime_action
+        FROM overtime ot
+        JOIN users u ON ot.applied_by = u.id
+        JOIN work_details wd ON u.id = wd.user_id
+        JOIN departments d ON wd.department = d.department
+        JOIN approver_assignments aa ON aa.department_id = d.id
+        WHERE aa.user_id = ?
+        AND ot.status = 'Rejected'
+        ORDER BY ot.datetime_action DESC
+    ";
+
+    $stmt3 = $conn->prepare($sqlRejected);
+    $stmt3->bind_param("i", $approver_id);
+    $stmt3->execute();
+    $rejected = $stmt3->get_result();
+
 ?>
 
 <!DOCTYPE html>
@@ -215,7 +246,7 @@
     <br>
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3>Overtime (PENDING | APPROVED)</h3>
+        <h3>Overtime (PENDING | APPROVED | REJECTED)</h3>
     </div>
 
     <!-- Pending Requests -->
@@ -311,6 +342,54 @@
                             <td><?= $row['datetime_action'] ?></td>
                         </tr>
                         <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejected Requests -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-danger text-white fw-bold">
+            Rejected Overtime Requests
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Application No</th>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Date</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Purpose</th>
+                            <th>Work Schedule</th>
+                            <th>Status</th>
+                            <th>Date Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($row = $rejected->fetch_assoc()): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($row['application_no']) ?></td>
+                            <td><?= htmlspecialchars($row['employee']) ?></td>
+                            <td><?= htmlspecialchars($row['department']) ?></td>
+                            <td><?= htmlspecialchars($row['date']) ?></td>
+                            <td><?= htmlspecialchars($row['from_time']) ?></td>
+                            <td><?= htmlspecialchars($row['to_time']) ?></td>
+                            <td><?= htmlspecialchars($row['purpose']) ?></td>
+                            <td><?= htmlspecialchars($row['work_schedule']) ?></td>
+                            <td><span class="badge bg-danger"><?= htmlspecialchars($row['status']) ?></span></td>
+                            <td><?= htmlspecialchars($row['datetime_action']) ?></td>
+                        </tr>
+                        <?php endwhile; ?>
+                        <?php if ($rejected->num_rows === 0): ?>
+                            <tr>
+                                <td colspan="10" class="text-center text-muted">No rejected requests found.</td>
+                            </tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>

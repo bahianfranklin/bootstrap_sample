@@ -313,8 +313,12 @@
                         <td><?= $row['work_schedule'] ?></td>
                         <td><span class="badge bg-<?= $statusClass ?>"><?= $row['status'] ?></span></td>
                         <td>
-                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">Edit</button>
-                            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal<?= $row['id'] ?>">Delete</button>
+                            <?php if ($row['status'] === 'Pending'): ?>
+                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">Edit</button>
+                                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal<?= $row['id'] ?>">Delete</button>
+                            <?php else: ?>
+                                <span class="text-muted">WITH UPDATED STATUS</span>
+                            <?php endif; ?>
                         </td>
                     </tr>
 

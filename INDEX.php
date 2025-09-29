@@ -27,6 +27,17 @@
 
     // ✅ Get Events
     $today = date("Y-m-d");
+
+    function isApprover($conn, $user_id) {
+        $sql = "SELECT 1 FROM approver_assignments WHERE user_id = ? LIMIT 1";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $stmt->store_result();
+        return $stmt->num_rows > 0;
+    }
+
+    $approver = isApprover($conn, $user_id);
 ?>
 
 <!DOCTYPE html>
@@ -113,6 +124,7 @@
                                     <a class="nav-link" href="WORK_RESTDAY.PHP">Work On Restday</a>
                                 </nav>
                             </div>
+                            <?php if ($approver): ?>
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseApproving" aria-expanded="false" aria-controls="collapseApproving">
                                 <div class="sb-nav-link-icon"><i class="fas fa-check-circle"></i></div>
                                 Approving
@@ -129,6 +141,7 @@
                                     <a class="nav-link" href="APPROVER_WORK_RESTDAY.PHP">Work On Restday</a>
                                 </nav>
                             </div>
+                            <?php endif; ?>
                             <a class="nav-link" href="USER_MAINTENANCE.php">
                                 <div class="sb-nav-link-icon"><i class="fas fa-building"></i></div>
                                 Users Info
@@ -217,7 +230,8 @@
                                         </div>
                                     </div>
                             </div>
-                        
+
+                            <?php if ($approver): ?>
                             <div class="card mb-3">
                                 <div class="card-header bg-danger">Pending</div>
                                     <div class="card-body">
@@ -258,6 +272,7 @@
                                     </div>
                                 </div>
                             </div>
+                            <?php endif; ?>
                         </div>
 
                 <footer class="py-4 bg-light mt-auto">

@@ -318,12 +318,16 @@ if (!$result) {
                             <td><?= htmlspecialchars($row['remarks']) ?></td>
                             <td><?= htmlspecialchars($row['status']) ?></td>
                             <td>
+                                <?php if ($row['status'] === 'Pending'): ?>
                                 <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal<?= $row['id'] ?>">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
+                                <?php else: ?>
+                                    <span class="text-muted">WITH UPDATED STATUS</span>
+                                <?php endif; ?>
                             </td>
                         </tr>
 

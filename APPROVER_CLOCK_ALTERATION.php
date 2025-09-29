@@ -79,6 +79,39 @@
     $stmt2->bind_param("i", $approver_id);
     $stmt2->execute();
     $approved = $stmt2->get_result();
+
+    /**
+     * 🔹 Rejected Clock Alteration Requests
+     */
+    $sqlRejected = "
+        SELECT 
+            ca.application_no,
+            u.name AS employee,
+            d.department,
+            ca.date_original,
+            ca.time_in_original,
+            ca.time_out_original,
+            ca.date_new,
+            ca.time_in_new,
+            ca.time_out_new,
+            ca.reason,
+            ca.status,
+            ca.datetime_action
+        FROM clock_alteration ca
+        JOIN users u ON ca.applied_by = u.id
+        JOIN work_details wd ON u.id = wd.user_id
+        JOIN departments d ON wd.department = d.department
+        JOIN approver_assignments aa ON aa.department_id = d.id
+        WHERE aa.user_id = ?
+        AND ca.status = 'Rejected'
+        ORDER BY ca.datetime_action DESC
+    ";
+
+    $stmt3 = $conn->prepare($sqlRejected);
+    $stmt3->bind_param("i", $approver_id);
+    $stmt3->execute();
+    $rejected = $stmt3->get_result();
+
 ?>
 
 <!DOCTYPE html>
@@ -219,7 +252,7 @@
     <br>
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3>Clock Alteration (PENDING | APPROVED)</h3>
+        <h3>Clock Alteration (PENDING | APPROVED | REJECTED)</h3>
     </div>
 
     <!-- Pending Requests -->
@@ -320,6 +353,53 @@
                             <td><?= $row['time_out_new'] ?></td>
                             <td><?= $row['reason'] ?></td>
                             <td><span class="badge bg-success"><?= $row['status'] ?></span></td>
+                            <td><?= $row['datetime_action'] ?></td>
+                        </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejected Requests -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-danger text-white fw-bold">
+            Rejected Clock Alteration Requests
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Application No</th>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Date (Original)</th>
+                            <th>Time In (Original)</th>
+                            <th>Time Out (Original)</th>
+                            <th>Date (New)</th>
+                            <th>Time In (New)</th>
+                            <th>Time Out (New)</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Date Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($row = $rejected->fetch_assoc()): ?>
+                        <tr>
+                            <td><?= $row['application_no'] ?></td>
+                            <td><?= $row['employee'] ?></td>
+                            <td><?= $row['department'] ?></td>
+                            <td><?= $row['date_original'] ?></td>
+                            <td><?= $row['time_in_original'] ?></td>
+                            <td><?= $row['time_out_original'] ?></td>
+                            <td><?= $row['date_new'] ?></td>
+                            <td><?= $row['time_in_new'] ?></td>
+                            <td><?= $row['time_out_new'] ?></td>
+                            <td><?= $row['reason'] ?></td>
+                            <td><span class="badge bg-danger"><?= $row['status'] ?></span></td>
                             <td><?= $row['datetime_action'] ?></td>
                         </tr>
                         <?php endwhile; ?>

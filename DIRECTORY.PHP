@@ -69,8 +69,6 @@
                 flex-grow: 1;
                 min-width: 0;
                 transition: margin-left 0.3s ease;
-                margin: 30px 30px 30px 30px;  
-                /* left = sidebar (250px) + gap (20px) */
             }
             /* Directory cards */
             .directory-card {
@@ -212,7 +210,8 @@
             </div>
              <div id="layoutSidenav_content">
         <main>
-        <h2 class="mb-4 text-left">Company Directory</h2>
+        <div class="container mt-3">
+        <h3 class="mb-4 text-left">Company Directory</h3>
         <br>
         <form method="GET" class="row mb-4">
             <div class="col-md-6">
