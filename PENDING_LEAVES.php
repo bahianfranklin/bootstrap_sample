@@ -275,12 +275,12 @@
                                     <td><?= $row['remarks'] ?></td>
                                     <td><?= $row['date_applied'] ?></td>
                                     <td class="d-flex gap-1">
-                                        <form method="POST" action="update_leave_status.php">
+                                        <form method="POST" action="UPDATE_LEAVE_STATUS.php">
                                             <input type="hidden" name="application_no" value="<?= $row['application_no'] ?>">
                                             <input type="hidden" name="action" value="Approved">
                                             <button type="submit" class="btn btn-success btn-sm">Approve</button>
                                         </form>
-                                        <form method="POST" action="update_leave_status.php">
+                                        <form method="POST" action="UPDATE_LEAVE_STATUS.php">
                                             <input type="hidden" name="application_no" value="<?= $row['application_no'] ?>">
                                             <input type="hidden" name="action" value="Rejected">
                                             <button type="submit" class="btn btn-danger btn-sm">Reject</button>

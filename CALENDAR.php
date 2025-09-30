@@ -107,6 +107,17 @@
             $error = "❌ SQL Prepare failed: " . $conn->error;
         }
     }
+
+     function isApprover($conn, $user_id) {
+        $sql = "SELECT 1 FROM approver_assignments WHERE user_id = ? LIMIT 1";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $stmt->store_result();
+        return $stmt->num_rows > 0;
+    }
+
+    $approver = isApprover($conn, $user_id);
 ?>
 
 <!DOCTYPE html>
@@ -224,7 +235,7 @@
 
                             <li><hr class="dropdown-divider" /></li>
                             <li><a class="dropdown-item" href="#!">Settings</a></li>
-                            <li><a class="dropdown-item" href="#!">Activity Log</a></li>
+                            <li><a class="dropdown-item" href="LOCK.PHP">Lock Screen</a></li>
                             <li><hr class="dropdown-divider" /></li>
                             <li><a class="dropdown-item" href="LOGOUT.php">Logout</a></li>
                         </ul>
@@ -256,6 +267,7 @@
                                     <a class="nav-link" href="WORK_RESTDAY">Work On Restday</a>
                                 </nav>
                             </div>
+                            <?php if ($approver): ?>
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseApproving" aria-expanded="false" aria-controls="collapseApproving">
                                 <div class="sb-nav-link-icon"><i class="fas fa-check-circle"></i></div>
                                 Approving
@@ -272,6 +284,7 @@
                                     <a class="nav-link" href="WORK_RESTDAY">Work On Restday</a>
                                 </nav>
                             </div>
+                            <?php endif; ?>
                             <a class="nav-link" href="USER_MAINTENANCE.php">
                                 <div class="sb-nav-link-icon"><i class="fas fa-building"></i></div>
                                 Users Info

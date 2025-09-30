@@ -19,6 +19,17 @@
     $userQuery->bind_param("i", $user_id);
     $userQuery->execute();
     $user = $userQuery->get_result()->fetch_assoc();
+
+    function isApprover($conn, $user_id) {
+        $sql = "SELECT 1 FROM approver_assignments WHERE user_id = ? LIMIT 1";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $stmt->store_result();
+        return $stmt->num_rows > 0;
+    }
+
+    $approver = isApprover($conn, $user_id);
 ?>
 
 <!DOCTYPE html>
@@ -29,7 +40,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="description" content="" />
         <meta name="author" content="" />
-        <title>Dashboard - SAMPLE SYSTEM</title>
+        <title>User Maintenance</title>
         <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
         <link href="css/styles.css" rel="stylesheet" />
         <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
@@ -71,7 +82,7 @@
 
                         <li><hr class="dropdown-divider" /></li>
                         <li><a class="dropdown-item" href="#!">Settings</a></li>
-                        <li><a class="dropdown-item" href="#!">Activity Log</a></li>
+                        <li><a class="dropdown-item" href="LOCK.PHP">Lock Screen</a></li>
                         <li><hr class="dropdown-divider" /></li>
                         <li><a class="dropdown-item" href="LOGOUT.php">Logout</a></li>
                     </ul>
@@ -104,6 +115,7 @@
                                     <a class="nav-link" href="WORK_RESTDAY">Work On Restday</a>
                                 </nav>
                             </div>
+                            <?php if ($approver): ?>
                             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseApproving" aria-expanded="false" aria-controls="collapseApproving">
                                 <div class="sb-nav-link-icon"><i class="fas fa-check-circle"></i></div>
                                 Approving
@@ -120,6 +132,7 @@
                                     <a class="nav-link" href="APPROVER_WORK_RESTDAY.PHP">Work On Restday</a>
                                 </nav>
                             </div>
+                            <?php endif; ?>
                             <a class="nav-link" href="USER_MAINTENANCE.php">
                                 <div class="sb-nav-link-icon"><i class="fas fa-building"></i></div>
                                 Users Info
@@ -154,6 +167,7 @@
             </div>
             <div id="layoutSidenav_content">
                 <main>
+                    <div class="container mt-3">
                     <div class="container-fluid px-4">
                         </br>
                         <h3 class="m-0">User Maintenance</h3>

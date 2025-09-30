@@ -1,5 +1,9 @@
 <?php
-// Enable error reporting for debugging (remove in production)
+// ==============================
+// Leave Requests Management
+// ==============================
+
+// Enable error reporting for debugging (disable in production)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -7,85 +11,129 @@ error_reporting(E_ALL);
 session_start();
 require 'db.php';
 
+// ✅ Ensure logged in
 if (!isset($_SESSION['user_id'])) {
     die("Please login first.");
 }
-
 $user_id = (int) $_SESSION['user_id'];
 
-// Fetch current user info for profile display
+// ==============================
+// Fetch Current User Info
+// ==============================
 $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $userResult = $stmt->get_result();
 $user = $userResult->fetch_assoc();
+if (!$user) {
+    die("User not found.");
+}
 
+// ==============================
 // Handle Add Leave Request
-if (isset($_POST['action']) && $_POST['action'] === 'add') {
-    // Use safe values / validation in real code
-    $leave_type = $_POST['leave_type'];
-    $type = $_POST['type'];
-    $credit_value = $_POST['credit_value'];
-    $date_from = $_POST['date_from'];
-    $date_to = $_POST['date_to'];
-    $remarks = $_POST['remarks'];
+// ==============================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $action = $_POST['action'];
 
-    $today = date("Ymd");
-    $sql = "SELECT COUNT(*) as total FROM leave_requests WHERE DATE(date_applied) = CURDATE()";
-    $res = $conn->query($sql);
-    if (!$res) {
-        die("Error counting leave_requests: " . $conn->error);
+    if ($action === 'add') {
+        $leave_type   = $_POST['leave_type'];
+        $type         = $_POST['type'];
+        $credit_value = (float) $_POST['credit_value'];
+        $date_from    = $_POST['date_from'];
+        $date_to      = $_POST['date_to'];
+        $remarks      = $_POST['remarks'];
+
+        // Validate date
+        if (!DateTime::createFromFormat('Y-m-d', $date_from) || !DateTime::createFromFormat('Y-m-d', $date_to)) {
+            die("Invalid date format.");
+        }
+
+        // Generate Application No
+            $today = date("Ymd");
+            // Count leave requests for this user today to make application_no unique per user per day
+            $sql = "SELECT COUNT(*) as total FROM leave_requests WHERE user_id = $user_id AND DATE(date_applied) = CURDATE()";
+            $res = $conn->query($sql);
+            if (!$res) {
+                die("Error counting leave_requests: " . $conn->error);
+            }
+            $row = $res->fetch_assoc();
+            $countToday = $row['total'] + 1;
+            $appNo = "L-" . $today . "-" . $user_id . "-" . str_pad($countToday, 2, "0", STR_PAD_LEFT);
+
+        // Insert
+        $stmt2 = $conn->prepare("
+            INSERT INTO leave_requests 
+            (application_no, user_id, leave_type, type, credit_value, date_from, date_to, remarks, date_applied) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        ");
+        $stmt2->bind_param("sissdsss", $appNo, $user_id, $leave_type, $type, $credit_value, $date_from, $date_to, $remarks);
+
+        if (!$stmt2->execute()) {
+            die("Insert failed: " . $stmt2->error);
+        }
+        // ✅ Redirect after delete
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
     }
-    $row = $res->fetch_assoc();
-    $countToday = $row['total'] + 1;
-    $appNo = "L-" . $today . "-" . str_pad($countToday, 2, "0", STR_PAD_LEFT);
 
-    $stmt2 = $conn->prepare("INSERT INTO leave_requests 
-        (application_no, user_id, leave_type, type, credit_value, date_from, date_to, remarks) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt2->bind_param("sissdsss", $appNo, $user_id, $leave_type, $type, $credit_value, $date_from, $date_to, $remarks);
-    if (!$stmt2->execute()) {
-        die("Insert failed: " . $stmt2->error);
+    // ==============================
+    // Handle Edit
+    // ==============================
+    if ($action === 'edit') {
+        $id           = (int) $_POST['id'];
+        $leave_type   = $_POST['leave_type'];
+        $type         = $_POST['type'];
+        $credit_value = (float) $_POST['credit_value'];
+        $date_from    = $_POST['date_from'];
+        $date_to      = $_POST['date_to'];
+        $remarks      = $_POST['remarks'];
+        $status       = $_POST['status'];
+
+        if (!DateTime::createFromFormat('Y-m-d', $date_from) || !DateTime::createFromFormat('Y-m-d', $date_to)) {
+            die("Invalid date format.");
+        }
+
+        $stmt3 = $conn->prepare("
+            UPDATE leave_requests 
+            SET leave_type=?, type=?, credit_value=?, date_from=?, date_to=?, remarks=?, status=?, date_updated=NOW() 
+            WHERE id=? AND user_id=?
+        ");
+        $stmt3->bind_param("ssdssssii", $leave_type, $type, $credit_value, $date_from, $date_to, $remarks, $status, $id, $user_id);
+
+        if (!$stmt3->execute()) {
+            die("Update failed: " . $stmt3->error);
+        }
+        // ✅ Redirect after delete
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
+    }
+
+    // ==============================
+    // Handle Delete
+    // ==============================
+    if ($action === 'delete') {
+        $id = (int) $_POST['id'];
+        $stmt4 = $conn->prepare("DELETE FROM leave_requests WHERE id=? AND user_id=?");
+        $stmt4->bind_param("ii", $id, $user_id);
+        if (!$stmt4->execute()) {
+            die("Delete failed: " . $stmt4->error);
+        }
+        // ✅ Redirect after delete
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
     }
 }
 
-// Handle Update
-if (isset($_POST['action']) && $_POST['action'] === 'edit') {
-    $id = $_POST['id'];
-    $leave_type = $_POST['leave_type'];
-    $type = $_POST['type'];
-    $credit_value = $_POST['credit_value'];
-    $date_from = $_POST['date_from'];
-    $date_to = $_POST['date_to'];
-    $remarks = $_POST['remarks'];
-    $status = $_POST['status'];
-
-    $stmt3 = $conn->prepare("UPDATE leave_requests SET leave_type=?, type=?, credit_value=?, date_from=?, date_to=?, remarks=?, status=?, date_updated=NOW() WHERE id=?");
-    $stmt3->bind_param("ssdssssi", $leave_type, $type, $credit_value, $date_from, $date_to, $remarks, $status, $id);
-    if (!$stmt3->execute()) {
-        die("Update failed: " . $stmt3->error);
-    }
-}
-
-// Handle Delete
-if (isset($_POST['action']) && $_POST['action'] === 'delete') {
-    $id = $_POST['id'];
-    $stmt4 = $conn->prepare("DELETE FROM leave_requests WHERE id=?");
-    $stmt4->bind_param("i", $id);
-    if (!$stmt4->execute()) {
-        die("Delete failed: " . $stmt4->error);
-    }
-}
-
-// Build filtering logic
-$where = [];
-$where[] = "lr.user_id = $user_id";
+// ==============================
+// Build Filtering Logic
+// ==============================
+$where = ["lr.user_id = $user_id"];
 
 if (!empty($_GET['date_range'])) {
     $dates = explode(" to ", $_GET['date_range']);
-    if (count($dates) == 2 && !empty($dates[0]) && !empty($dates[1])) {
+    if (count($dates) === 2 && !empty($dates[0]) && !empty($dates[1])) {
         $from = $conn->real_escape_string($dates[0]);
-        $to = $conn->real_escape_string($dates[1]);
+        $to   = $conn->real_escape_string($dates[1]);
         $where[] = "lr.date_from >= '$from' AND lr.date_to <= '$to'";
     }
 }
@@ -94,26 +142,40 @@ if (!empty($_GET['leave_type'])) {
     $leave_type = $conn->real_escape_string($_GET['leave_type']);
     $where[] = "lr.leave_type = '$leave_type'";
 }
+
 if (!empty($_GET['status'])) {
     $status = $conn->real_escape_string($_GET['status']);
     $where[] = "lr.status = '$status'";
 }
 
-$whereSQL = "";
-if (count($where) > 0) {
-    $whereSQL = "WHERE " . implode(" AND ", $where);
-}
+$whereSQL = $where ? "WHERE " . implode(" AND ", $where) : "";
 
-$sql = "SELECT lr.*, u.username 
-        FROM leave_requests lr 
-        JOIN users u ON lr.user_id = u.id
-        $whereSQL
-        ORDER BY lr.date_applied DESC";
-
+// ==============================
+// Fetch Leave Requests
+// ==============================
+$sql = "
+    SELECT lr.*, u.username 
+    FROM leave_requests lr 
+    JOIN users u ON lr.user_id = u.id
+    $whereSQL
+    ORDER BY lr.date_applied DESC
+";
 $result = $conn->query($sql);
 if (!$result) {
     die("Query Failed: " . $conn->error . " -- SQL: " . $sql);
 }
+
+function isApprover($conn, $user_id) {
+    $sql = "SELECT 1 FROM approver_assignments WHERE user_id = ? LIMIT 1";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $stmt->store_result();
+    return $stmt->num_rows > 0;
+}
+
+$approver = isApprover($conn, $user_id);
+
 ?>
 
 <!DOCTYPE html>
@@ -168,7 +230,7 @@ if (!$result) {
                             <li><hr class="dropdown-divider" /></li>
                             <li><a class="dropdown-item" href="EDIT_USER_PROFILE.php?id=<?= $user['id'] ?>">Edit Profile</a></li>
                             <li><a class="dropdown-item" href="#!">Settings</a></li>
-                            <li><a class="dropdown-item" href="#!">Activity Log</a></li>
+                            <li><a class="dropdown-item" href="LOCK.PHP">Lock Screen</a></li>
                             <li><hr class="dropdown-divider" /></li>
                             <li><a class="dropdown-item" href="LOGOUT.php">Logout</a></li>
                         </ul>
@@ -200,6 +262,7 @@ if (!$result) {
                                         <a class="nav-link" href="WORK_RESTDAY.PHP">Work On Restday</a>
                                     </nav>
                                 </div>
+                                <?php if ($approver): ?>
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseApproving" aria-expanded="false" aria-controls="collapseApproving">
                                     <div class="sb-nav-link-icon"><i class="fas fa-check-circle"></i></div>
                                     Approving
@@ -216,6 +279,7 @@ if (!$result) {
                                         <a class="nav-link" href="APPROVER_WORK_RESTDAY.PHP">Work On Restday</a>
                                     </nav>
                                 </div>
+                                <?php endif; ?>
                                 <a class="nav-link" href="USER_MAINTENANCE.php">
                                     <div class="sb-nav-link-icon"><i class="fas fa-building"></i></div>
                                     Users Info
@@ -270,7 +334,7 @@ if (!$result) {
                                 <option value="">Select</option>
                                 <option value="Vacation Leave" <?= isset($_GET['leave_type']) && $_GET['leave_type'] == "Vacation Leave" ? "selected" : "" ?>>Vacation Leave</option>
                                 <option value="Sick Leave" <?= isset($_GET['leave_type']) && $_GET['leave_type'] == "Sick Leave" ? "selected" : "" ?>>Sick Leave</option>
-                                <option value="Mandatory Leave" <?= isset($_GET['leave_type']) && $_GET['leave_type'] == "Madantory Leave" ? "selected" : "" ?>>Mandatory Leave</option>
+                                <option value="Mandatory Leave" <?= isset($_GET['leave_type']) && $_GET['leave_type'] == "Madatory Leave" ? "selected" : "" ?>>Mandatory Leave</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -479,14 +543,19 @@ if (!$result) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
+        // ✅ Range picker for filters
         flatpickr(".dateRangePicker", {
             mode: "range",
+            dateFormat: "Y-m-d"
+        });
+
+        // ✅ Single date pickers for leave application (From / To)
+        flatpickr(".datepicker", {
             dateFormat: "Y-m-d",
-            onChange: function (selectedDates, dateStr, instance) {
-                // optionally, if you want to fill hidden inputs or something
-            }
+            allowInput: true
         });
     </script>
+
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {

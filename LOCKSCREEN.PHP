@@ -15,11 +15,8 @@ $user = $stmt->fetch();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
-    $userId = $_SESSION['locked_user_id'];
-    $stmt = $pdo->prepare("SELECT password, username FROM users WHERE id = ?");
-    $stmt->execute([$userId]);
-    $user = $stmt->fetch();
-
+    
+    // Use existing $user['password']
     if ($user && password_verify($password, $user['password'])) {
         unset($_SESSION['locked_user_id']);
         $_SESSION['user_id'] = $userId;

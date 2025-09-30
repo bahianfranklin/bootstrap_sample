@@ -99,7 +99,7 @@
     <body class="container mt-5">
 
         <div class="container mt-4">
-            <h3>Approver Assignment</h3>
+            <h5>Approver Assignment</h5>
             <br>
             <form method="POST" action="">
                 <input type="hidden" name="action" value="insert">
@@ -174,7 +174,7 @@
 
         <!-- Assignment Table -->
         <div class="mt-5">
-            <h4>Assigned Employees</h4>
+            <h5>Assigned Employees</h5>
             <table class="table table-bordered">
                 <thead>
                     <tr>
