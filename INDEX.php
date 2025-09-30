@@ -92,7 +92,7 @@
                         <li><hr class="dropdown-divider" /></li>
                         <li><a class="dropdown-item" href="EDIT_USER_PROFILE.php?id=<?= $user['id'] ?>">Edit Profile</a></li>
                         <li><a class="dropdown-item" href="#!">Settings</a></li>
-                        <li><a class="dropdown-item" href="#!">Activity Log</a></li>
+                        <li><a class="dropdown-item" href="LOCK.PHP">Lock Screen</a></li>
                         <li><hr class="dropdown-divider" /></li>
                         <li><a class="dropdown-item" href="LOGOUT.php">Logout</a></li>
                     </ul>

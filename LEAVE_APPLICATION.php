@@ -270,7 +270,7 @@ if (!$result) {
                                 <option value="">Select</option>
                                 <option value="Vacation Leave" <?= isset($_GET['leave_type']) && $_GET['leave_type'] == "Vacation Leave" ? "selected" : "" ?>>Vacation Leave</option>
                                 <option value="Sick Leave" <?= isset($_GET['leave_type']) && $_GET['leave_type'] == "Sick Leave" ? "selected" : "" ?>>Sick Leave</option>
-                                <option value="Emergency Leave" <?= isset($_GET['leave_type']) && $_GET['leave_type'] == "Emergency Leave" ? "selected" : "" ?>>Emergency Leave</option>
+                                <option value="Mandatory Leave" <?= isset($_GET['leave_type']) && $_GET['leave_type'] == "Madantory Leave" ? "selected" : "" ?>>Mandatory Leave</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -348,7 +348,7 @@ if (!$result) {
                                                 <select class="form-select" name="leave_type" required>
                                                     <option value="Vacation Leave" <?= $row['leave_type'] == "Vacation Leave" ? "selected" : "" ?>>Vacation Leave</option>
                                                     <option value="Sick Leave" <?= $row['leave_type'] == "Sick Leave" ? "selected" : "" ?>>Sick Leave</option>
-                                                    <option value="Emergency Leave" <?= $row['leave_type'] == "Emergency Leave" ? "selected" : "" ?>>Emergency Leave</option>
+                                                    <option value="Mandatory Leave" <?= $row['leave_type'] == "Mandatory Leave" ? "selected" : "" ?>>Mandatory Leave</option>
                                                 </select>
                                             </div>
                                             <div class="mb-2">
@@ -439,7 +439,7 @@ if (!$result) {
                                 <option value="">-- Select --</option>
                                 <option value="Vacation Leave">Vacation Leave</option>
                                 <option value="Sick Leave">Sick Leave</option>
-                                <option value="Emergency Leave">Emergency Leave</option>
+                                <option value="Mandatory Leave">Mandatory Leave</option>
                             </select>
                         </div>
                         <div class="mb-2">
