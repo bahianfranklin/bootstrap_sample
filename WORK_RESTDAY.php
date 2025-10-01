@@ -21,20 +21,33 @@
         $date          = $_POST['date'];
         $from_time     = $_POST['from_time'];
         $to_time       = $_POST['to_time'];
+        $purpose       = $_POST['purpose'];
         $work_schedule = $_POST['work_schedule'];
 
-        // Generate application number (WRD-yyyyMMdd-##)
-        $today = date("Ymd");
-        $res = $conn->query("SELECT COUNT(*) as total FROM work_restday WHERE DATE(datetime_applied)=CURDATE()");
-        $row = $res->fetch_assoc();
-        $countToday = $row['total'] + 1;
-        $appNo = "WRD-" . $today . "-" . str_pad($countToday, 2, "0", STR_PAD_LEFT);
+        // ✅ Check duplication
+        $dupCheck = $conn->prepare("SELECT id FROM work_restday WHERE applied_by = ? AND date = ?");
+        $dupCheck->bind_param("is", $user_id, $date);
+        $dupCheck->execute();
+        $dupCheck->store_result();
 
-        $stmt = $conn->prepare("INSERT INTO work_restday 
-            (application_no, date, from_time, to_time, work_schedule, applied_by) 
-            VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssssi", $appNo, $date, $from_time, $to_time, $work_schedule, $user_id);
-        $stmt->execute();
+        if ($dupCheck->num_rows > 0) {
+            echo "<script>alert('⚠ You already filed for this date!');</script>";
+        } else {
+            // continue with insert...
+            $today = date("Ymd");
+            $res = $conn->query("SELECT COUNT(*) as total FROM work_restday WHERE DATE(datetime_applied)=CURDATE()");
+            $row = $res->fetch_assoc();
+            $countToday = $row['total'] + 1;
+            $appNo = "WRD-" . $today . "-" . str_pad($countToday, 2, "0", STR_PAD_LEFT);
+
+            $stmt = $conn->prepare("INSERT INTO work_restday 
+                (application_no, date, from_time, to_time, purpose, work_schedule, applied_by, datetime_applied) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+            $stmt->bind_param("ssssssi", $appNo, $date, $from_time, $to_time, $purpose, $work_schedule, $user_id);
+            $stmt->execute();
+
+            echo "<script>alert('✅ Request submitted successfully!');</script>";
+        }
     }
 
     /** ========== EDIT ========= */
@@ -43,14 +56,27 @@
         $date          = $_POST['date'];
         $from_time     = $_POST['from_time'];
         $to_time       = $_POST['to_time'];
+        $purpose       = $_POST['purpose'];
         $work_schedule = $_POST['work_schedule'];
         $status        = $_POST['status'];
 
-        $stmt = $conn->prepare("UPDATE work_restday 
-            SET date=?, from_time=?, to_time=?, work_schedule=?, status=?, datetime_updated=NOW() 
-            WHERE id=?");
-        $stmt->bind_param("sssssi", $date, $from_time, $to_time, $work_schedule, $status, $id);
-        $stmt->execute();
+        // ✅ Check duplicates excluding current record
+        $dupCheck = $conn->prepare("SELECT id FROM work_restday WHERE applied_by = ? AND date = ? AND id != ?");
+        $dupCheck->bind_param("isi", $user_id, $date, $id);
+        $dupCheck->execute();
+        $dupCheck->store_result();
+
+        if ($dupCheck->num_rows > 0) {
+            echo "<script>alert('⚠ You already filed for this date!');</script>";
+        } else {
+            $stmt = $conn->prepare("UPDATE work_restday 
+                SET date=?, from_time=?, to_time=?, purpose=?, work_schedule=?, status=?, datetime_updated=NOW() 
+                WHERE id=?");
+            $stmt->bind_param("ssssssi", $date, $from_time, $to_time, $purpose, $work_schedule, $status, $id);
+            $stmt->execute();
+
+            echo "<script>alert('✅ Request updated successfully!');</script>";
+        }
     }
 
     /** ========== DELETE ========= */
@@ -117,6 +143,30 @@
     }
 
     $approver = isApprover($conn, $user_id);
+
+    // Get employee schedule
+    $schedStmt = $conn->prepare("SELECT * FROM employee_schedules WHERE user_id = ?");
+    $schedStmt->bind_param("i", $user_id);
+    $schedStmt->execute();
+    $sched = $schedStmt->get_result()->fetch_assoc();
+
+    // Build allowed rest days array
+    $restDays = [];
+    $daysMap = [
+        'sunday' => 0,
+        'monday' => 1,
+        'tuesday' => 2,
+        'wednesday' => 3,
+        'thursday' => 4,
+        'friday' => 5,
+        'saturday' => 6
+    ];
+
+    foreach ($daysMap as $dayName => $dayNum) {
+        if ($sched[$dayName] === 'rest_day') {
+            $restDays[] = $dayNum;
+        }
+    }
 ?>
 
 <!DOCTYPE html>
@@ -299,6 +349,7 @@
                     <th>Date</th>
                     <th>From Time</th>
                     <th>To Time</th>
+                    <th>Purpose</th>
                     <th>Work Schedule</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -322,6 +373,7 @@
                         <td><?= $row['date'] ?></td>
                         <td><?= date("h:i A", strtotime($row['from_time'])) ?></td>
                         <td><?= date("h:i A", strtotime($row['to_time'])) ?></td>
+                        <td><?= htmlspecialchars($row['purpose']) ?></td>
                         <td><?= $row['work_schedule'] ?></td>
                         <td><span class="badge bg-<?= $statusClass ?>"><?= $row['status'] ?></span></td>
                         <td>
@@ -352,8 +404,13 @@
                                         <input type="time" name="from_time" value="<?= $row['from_time'] ?>" class="form-control mb-2" required>
                                         <label>To Time</label>
                                         <input type="time" name="to_time" value="<?= $row['to_time'] ?>" class="form-control mb-2" required>
+                                        <label>Purpose</label>
+                                        <textarea name="purpose" class="form-control mb-2" required></textarea>
                                         <label>Work Schedule</label>
-                                        <input type="text" name="work_schedule" value="<?= $row['work_schedule'] ?>" class="form-control mb-2" required>
+                                        <select name="work_schedule" class="form-select mb-2" required>
+                                            <option value="On-site">On-site</option>
+                                            <option value="Work from Home">Work from Home</option>
+                                        </select>
                                         <label>Status</label>
                                         <select name="status" class="form-select">
                                             <option <?= $row['status']=="Pending"?"selected":"" ?>>Pending</option>
@@ -415,8 +472,13 @@
                             <input type="time" name="from_time" class="form-control mb-2" required>
                             <label>To Time</label>
                             <input type="time" name="to_time" class="form-control mb-2" required>
+                            <label>Purpose</label>
+                            <textarea name="purpose" class="form-control mb-2" required></textarea>
                             <label>Work Schedule</label>
-                            <input type="text" name="work_schedule" class="form-control mb-2" required>
+                            <select name="work_schedule" class="form-select mb-2" required>
+                                <option value="On-site">On-site</option>
+                                <option value="Work from Home">Work from Home</option>
+                            </select>
                         </div>
                         <div class="modal-footer">
                             <button type="submit" class="btn btn-success">Submit</button>
@@ -449,8 +511,34 @@
                 time_24hr: false
             });
         </script>
+
+        <script>
+            const allowedRestDays = <?= json_encode($restDays) ?>;
+
+            // For ADD modal
+            flatpickr("input[name='date']", {
+                dateFormat: "Y-m-d",
+                minDate: "today",
+                disable: [
+                    function(date) {
+                        return allowedRestDays.indexOf(date.getDay()) === -1;
+                    }
+                ]
+            });
+
+            // For EDIT modal
+            flatpickr("#EditModal input[name='date']", {
+                dateFormat: "Y-m-d",
+                minDate: "today",
+                disable: [
+                    function(date) {
+                        return allowedRestDays.indexOf(date.getDay()) === -1;
+                    }
+                ]
+            });
+        </script>
+
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-        
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 const body = document.body;

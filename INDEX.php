@@ -23,7 +23,8 @@
     $stmt = $conn->prepare($leave_sql);
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
-    $leave = $stmt->get_result()->fetch_assoc();
+    $result = $stmt->get_result();
+    $leave = $result->fetch_assoc();
 
     // ✅ Get Events
     $today = date("Y-m-d");
@@ -193,6 +194,58 @@
                         <div class="container">
                             <h1 class="mb-4"></h1>
 
+                            <!-- Work From Home Section -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-secondary text-white">Work From Home</div>
+                                <div class="card-body text-center">
+                                    <?php
+                                    $day = strtolower(date("l")); // e.g. "monday"
+
+                                    $sql = "SELECT `$day` AS today_schedule FROM employee_schedules WHERE user_id = ?";
+                                    $stmt = $conn->prepare($sql);
+                                    $row = [];
+                                    if (!$stmt) {
+                                        echo '<div class="alert alert-danger">SQL Prepare failed: ' . htmlspecialchars($conn->error) . '<br>Query: ' . htmlspecialchars($sql) . '<br>Check if the column <b>' . htmlspecialchars($day) . '</b> exists in employees_schedule.</div>';
+                                    } else {
+                                        $stmt->bind_param("i", $user_id);
+                                        $stmt->execute();
+                                        $result = $stmt->get_result();
+                                        $row = $result->fetch_assoc();
+                                    }
+
+                                    // check if today is WFH
+                                    if ($row && $row['today_schedule'] === "work_from_home") {
+                                        // check current status in attendance_logs
+                                        $check = $conn->prepare("SELECT login_time, logout_time 
+                                                                FROM attendance_logs 
+                                                                WHERE user_id = ? AND log_date = ? AND work_type = 'work_from_home'");
+                                        $log_date = date("Y-m-d");
+                                        $check->bind_param("is", $user_id, $log_date);
+                                        $check->execute();
+                                        $checkResult = $check->get_result();
+                                        $log = $checkResult->fetch_assoc();
+
+                                        if (!$log) {
+                                            // not logged in yet
+                                            echo '<button class="btn btn-success" onclick="wfhAction(\'login\')">Login</button>';
+                                        } elseif ($log['login_time'] && !$log['logout_time']) {
+                                            // logged in but not yet logged out
+                                            echo '<button class="btn btn-danger" onclick="wfhAction(\'logout\')">Logout</button>';
+                                            echo '<p class="mt-2 text-muted">Logged in at: ' . date("h:i A", strtotime($log['login_time'])) . '</p>';
+                                        } elseif ($log['login_time'] && $log['logout_time']) {
+                                            // already logged in & out
+                                            echo '<p class="text-success">✔ You have logged in and out today.</p>';
+                                            echo '<p class="text-muted">In: ' . date("h:i A", strtotime($log['login_time'])) . 
+                                                ' | Out: ' . date("h:i A", strtotime($log['logout_time'])) . '</p>';
+                                        }
+                                    } else {
+                                        echo "<p class='text-muted'>Today is not a WFH schedule.</p>";
+                                    }
+                                    ?>
+                                    <p id="wfhStatus" class="mt-2"></p>
+                                </div>
+                            </div>
+
                             <!-- Leave Balance -->
                             <div class="card mb-3">
                                 <div class="card-header bg-primary text-white">Leave Balance</div>
@@ -302,7 +355,8 @@
             function fetchDashboard() {
                 fetch("DASHBOARD_DATA.php")
                     .then(res => res.json())
-                    .then(data => {
+                    .then(data => { 
+                        console.log(data);
                         if (data.error) {
                             document.getElementById("leaveBalance").innerHTML = "<p>Error: " + data.error + "</p>";
                             return;
@@ -378,5 +432,26 @@
             setInterval(fetchDashboard, 5000);
         </script>
 
+        <script>
+            function wfhAction(action) {
+                fetch("WFH_ACTION.php", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                    body: "action=" + action
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById("wfhStatus").innerHTML = `<b>${data.success}</b>`;
+                        setTimeout(() => location.reload(), 1000); // refresh to update buttons
+                    } else {
+                        document.getElementById("wfhStatus").innerHTML = `<span class="text-danger">${data.error}</span>`;
+                    }
+                })
+                .catch(err => {
+                    document.getElementById("wfhStatus").innerHTML = "<span class='text-danger'>Error processing request</span>";
+                });
+            }
+        </script>
     </body>
 </html>

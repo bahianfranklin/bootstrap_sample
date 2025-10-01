@@ -47,6 +47,32 @@
     }
 
     $approver = isApprover($conn, $user_id);
+
+    // ATTENDANCE FECTHING DATA 
+    $today = date('Y-m-d');
+    $sql = "SELECT u.id, u.name, u.address, u.contact, u.email, u.role, u.profile_pic,
+                a.login_time, a.logout_time, a.work_type
+            FROM users u
+            LEFT JOIN attendance_logs a 
+                ON u.id = a.user_id AND a.log_date = ?
+            WHERE u.status = 'active' AND u.name LIKE ?";
+
+    $params = [$today, $search];
+    $types = "ss";
+
+    if ($role) {
+        $sql .= " AND u.role = ?";
+        $params[] = $role;
+        $types .= "s";
+    }
+
+    $sql .= " ORDER BY u.name ASC";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
 ?>
 
 <!DOCTYPE html>
@@ -97,6 +123,28 @@
                 object-fit: cover;
                 border-radius: 50%;
                 border: 2px solid #ddd;
+            }
+
+            /* Scroll-to-Top Button */
+            #scrollUpBtn {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 99;
+                border: none;
+                outline: none;
+                background-color: #0d6efd; /* Bootstrap primary */
+                color: white;
+                cursor: pointer;
+                padding: 12px 16px;
+                border-radius: 50%;
+                font-size: 18px;
+                box-shadow: 0px 3px 6px rgba(0,0,0,0.2);
+                display: none; /* hidden by default */
+                transition: opacity 0.3s ease;
+            }
+            #scrollUpBtn:hover {
+                background-color: #0b5ed7;
             }
         </style>
 
@@ -298,13 +346,59 @@
                                 });
                             });
                         </script>
+
                         <p>🏠 <small class="text-secondary"><?= htmlspecialchars($row['address']) ?></small></p>
+                        <div class="dropdown position-absolute top-0 end-0 mt-2 me-2">
+                            <a class="text-decoration-none small text-primary dropdown-toggle" 
+                            href="#" id="attendanceDropdown<?= $row['id'] ?>" 
+                            role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                [Attendance]
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="attendanceDropdown<?= $row['id'] ?>">
+                                <?php if ($row['login_time'] || $row['logout_time'] || $row['work_type']): ?>
+                                    <li class="px-3 py-2 small">
+                                        🟢 <strong>Login:</strong> <?= $row['login_time'] ? date("h:i A", strtotime($row['login_time'])) : 'N/A'; ?>
+                                    </li>
+                                    <li class="px-3 py-2 small">
+                                        🔴 <strong>Logout:</strong> <?= $row['logout_time'] ? date("h:i A", strtotime($row['logout_time'])) : 'N/A'; ?>
+                                    </li>
+                                    <li class="px-3 py-2 small">
+                                        🏷 <strong>Work Type:</strong> <?= $row['work_type'] ? ucfirst(str_replace('_',' ',$row['work_type'])) : 'N/A'; ?>
+                                    </li>
+                                <?php else: ?>
+                                    <li class="px-3 py-2 small text-muted">No attendance record today</li>
+                                <?php endif; ?>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             <?php endwhile; ?>
         </div>
     </div>
+        <button onclick="scrollToTop()" id="scrollUpBtn" title="Go to top">
+            <i class="fas fa-arrow-up"></i>
+        </button>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         <script src="js/scripts.js"></script>
+        
+        <script>
+            // Show the button when user scrolls down 100px
+            window.onscroll = function() { toggleScrollButton(); };
+
+            function toggleScrollButton() {
+                const btn = document.getElementById("scrollUpBtn");
+                if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+                    btn.style.display = "block";
+                } else {
+                    btn.style.display = "none";
+                }
+            }
+
+            // Smooth scroll to top
+            function scrollToTop() {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        </script>
+
     </body>
 </html>
