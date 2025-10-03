@@ -34,17 +34,17 @@
             $stmt->bind_param("ssssss", $event_type, $title, $date, $location, $description, $visibility);
             if ($stmt->execute()) {
                 $success = "✅ Event added successfully!";
-                header("Location: calendar1.php?success=1");
+                header("Location: CALENDAR.php?success=1");
                 exit();
             } else {
                 $error = "❌ Insert failed: " . $stmt->error;
-                header("Location: calendar1.php?success=1");
+                header("Location: CALENDAR.php?success=1");
                 exit();
             }
             $stmt->close();
         } else {
             $error = "❌ SQL Prepare failed: " . $conn->error;
-            header("Location: calendar1.php?success=1");
+            header("Location: CALENDAR.php?success=1");
             exit();
         }
     }
@@ -67,16 +67,16 @@
             if ($stmt->execute()) {
             if ($stmt->affected_rows > 0) {
                 $success = "✅ Event updated successfully!";
-                header("Location: calendar1.php?success=1");
+                header("Location: CALENDAR.php?success=1");
                 exit();
             } else {
                 $error = "⚠️ No changes made. Either the ID does not exist or the data is the same.";
-                header("Location: calendar1.php?success=1");
+                header("Location: CALENDAR.php?success=1");
                 exit();
             }
             } else {
                 $error = "❌ Update failed: " . $stmt->error;
-                header("Location: calendar1.php?success=1");
+                header("Location: CALENDAR.php?success=1");
                 exit();
             }
         }
@@ -337,7 +337,7 @@
                 <div class="modal fade" id="addEventModal" tabindex="-1">
                     <div class="modal-dialog">
                         <div class="modal-content">
-                            <form method="POST" action="calendar1.php">
+                            <form method="POST" action="CALENDAR.php">
                                 <div class="modal-header">
                                     <h5 class="modal-title">Add New Event</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -403,7 +403,7 @@
             <div class="modal fade" id="editEventModal" tabindex="-1">
                 <div class="modal-dialog">
                     <div class="modal-content">
-                        <form method="POST" action="calendar1.php">
+                        <form method="POST" action="CALENDAR.php">
                             <input type="hidden" name="update_event" value="1">
                             <input type="hidden" name="id" id="edit-id">
                             <div class="modal-header">
@@ -475,7 +475,7 @@
 
                 const eventId = document.getElementById('edit-id').value;
 
-                fetch('calendar1.php', {
+                fetch('CALENDAR.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({

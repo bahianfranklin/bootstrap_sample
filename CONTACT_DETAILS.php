@@ -482,7 +482,23 @@
                                 <option value="pdf">PDF</option>
                             </select>
                         </label>
-                    </form>               
+                    </form>  
+
+                    <form method="get" action="Export.php" class="d-inline">
+                        <div class="ms-auto text-end mt-2">
+                            <small>
+                                <?php
+                                if ($totalRecords > 0) {
+                                    $start = $offset + 1;
+                                    $end = $offset + count($currentRecords);
+                                    echo "Showing {$start} to {$end} of {$totalRecords} records";
+                                } else {
+                                    echo "Showing 0 to 0 of 0 records";
+                                }
+                                ?>
+                            </small>
+                        </div>
+                    </form>
             </div>
         <?php else: ?>
             <p>No records found.</p>

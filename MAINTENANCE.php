@@ -196,25 +196,25 @@
 
                         <div class="tab-content mt-3">
                             <div class="tab-pane fade <?= $activeTab=='branch' ? 'show active' : '' ?>" id="branch">
-                                <?php include 'branch.php'; ?>
+                                <?php include 'BRANCH.php'; ?>
                             </div>
                             <div class="tab-pane fade <?= $activeTab=='department' ? 'show active' : '' ?>" id="department">
-                                <?php include 'department.php'; ?>
+                                <?php include 'DEPARTMENT.php'; ?>
                             </div>
                             <div class="tab-pane fade <?= $activeTab=='position' ? 'show active' : '' ?>" id="position">
-                                <?php include 'position.php'; ?>
+                                <?php include 'POSITION.php'; ?>
                             </div>
                             <div class="tab-pane fade <?= $activeTab=='level' ? 'show active' : '' ?>" id="level">
-                                <?php include 'level.php'; ?>
+                                <?php include 'LEVEL.php'; ?>
                             </div>
                             <div class="tab-pane fade <?= $activeTab=='tax' ? 'show active' : '' ?>" id="tax">
-                                <?php include 'tax.php'; ?>
+                                <?php include 'TAX.php'; ?>
                             </div>
                             <div class="tab-pane fade <?= $activeTab=='status' ? 'show active' : '' ?>" id="status">
-                                <?php include 'status.php'; ?>
+                                <?php include 'STATUS.php'; ?>
                             </div>
                             <div class="tab-pane fade <?= $activeTab=='payroll' ? 'show active' : '' ?>" id="payroll">
-                                <?php include 'payroll_periods.php'; ?>
+                                <?php include 'PAYROLL_PERIODS.php'; ?>
                             </div>
                         </div>
                     </div>

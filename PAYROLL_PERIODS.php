@@ -3,29 +3,30 @@ require 'db.php';
 
 // ✅ Handle Add Payroll Period
 if (isset($_POST['add'])) {
-    $stmt = $conn->prepare("INSERT INTO payroll_periods (period_code, start_date, end_date, cutoff, status) VALUES (?,?,?,?,?)");
-    $stmt->bind_param("sssss", $_POST['period_code'], $_POST['start_date'], $_POST['end_date'], $_POST['cutoff'], $_POST['status']);
-    $stmt->execute();
-    header("Location: payroll_periods.php");
-    exit;
+  $stmt = $conn->prepare("INSERT INTO payroll_periods (period_code, start_date, end_date, cutoff, status) VALUES (?,?,?,?,?)");
+  $stmt->bind_param("sssss", $_POST['period_code'], $_POST['start_date'], $_POST['end_date'], $_POST['cutoff'], $_POST['status']);
+  $stmt->execute();
+  // Redirect back to MAINTENANCE.php with payroll tab active
+  header("Location: MAINTENANCE.php?tab=payroll");
+  exit;
 }
 
 // ✅ Handle Update Payroll Period
 if (isset($_POST['update'])) {
-    $stmt = $conn->prepare("UPDATE payroll_periods SET period_code=?, start_date=?, end_date=?, cutoff=?, status=? WHERE id=?");
-    $stmt->bind_param("sssssi", $_POST['period_code'], $_POST['start_date'], $_POST['end_date'], $_POST['cutoff'], $_POST['status'], $_POST['id']);
-    $stmt->execute();
-    header("Location: payroll_periods.php");
-    exit;
+  $stmt = $conn->prepare("UPDATE payroll_periods SET period_code=?, start_date=?, end_date=?, cutoff=?, status=? WHERE id=?");
+  $stmt->bind_param("sssssi", $_POST['period_code'], $_POST['start_date'], $_POST['end_date'], $_POST['cutoff'], $_POST['status'], $_POST['id']);
+  $stmt->execute();
+  header("Location: MAINTENANCE.php?tab=payroll");
+  exit;
 }
 
 // ✅ Handle Delete Payroll Period
 if (isset($_POST['delete'])) {
-    $stmt = $conn->prepare("DELETE FROM payroll_periods WHERE id=?");
-    $stmt->bind_param("i", $_POST['id']);
-    $stmt->execute();
-    header("Location: payroll_periods.php");
-    exit;
+  $stmt = $conn->prepare("DELETE FROM payroll_periods WHERE id=?");
+  $stmt->bind_param("i", $_POST['id']);
+  $stmt->execute();
+  header("Location: MAINTENANCE.php?tab=payroll");
+  exit;
 }
 
 // ✅ Fetch Payroll Periods
@@ -42,8 +43,8 @@ $result = $conn->query($sql);
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="mb-0">Payroll Period Maintenance</h4>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+        <h5 class="mb-0">Payroll Period Maintenance</h5>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPayrollModal">
             + Add Payroll Period
         </button>
     </div>
@@ -70,18 +71,18 @@ $result = $conn->query($sql);
                 <td>
                     <button class="btn btn-sm btn-warning" 
                         data-bs-toggle="modal" 
-                        data-bs-target="#editModal<?= $row['id'] ?>">Edit</button>
+                        data-bs-target="#editPayrollModal<?= $row['id'] ?>">Edit</button>
                     <button class="btn btn-sm btn-danger" 
                         data-bs-toggle="modal" 
-                        data-bs-target="#deleteModal<?= $row['id'] ?>">Delete</button>
+                        data-bs-target="#deletePayrollModal<?= $row['id'] ?>">Delete</button>
                 </td>
             </tr>
 
             <!-- Edit Modal -->
-            <div class="modal fade" id="editModal<?= $row['id'] ?>" tabindex="-1">
+            <div class="modal fade" id="editPayrollModal<?= $row['id'] ?>">
               <div class="modal-dialog">
                 <div class="modal-content">
-                  <form method="post" action="">
+                  <form method="post" action="payroll_periods.php">
                     <div class="modal-header">
                       <h5 class="modal-title">Edit Payroll Period</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -127,10 +128,10 @@ $result = $conn->query($sql);
             </div>
 
             <!-- Delete Modal -->
-            <div class="modal fade" id="deleteModal<?= $row['id'] ?>" tabindex="-1">
+            <div class="modal fade" id="deletePayrollModal<?= $row['id'] ?>">
               <div class="modal-dialog">
                 <div class="modal-content">
-                  <form method="post" action="">
+                  <form method="post" action="payroll_periods.php">
                     <div class="modal-header">
                       <h5 class="modal-title">Delete Payroll Period</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -154,10 +155,10 @@ $result = $conn->query($sql);
 </div>
 
 <!-- Add Modal -->
-<div class="modal fade" id="addModal" tabindex="-1">
+<div class="modal fade" id="addPayrollModal">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form method="post" action="">
+      <form method="post" action="payroll_periods.php">
         <div class="modal-header">
           <h5 class="modal-title">Add Payroll Period</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -202,5 +203,19 @@ $result = $conn->query($sql);
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Debug: Check for duplicate modal IDs
+document.addEventListener('DOMContentLoaded', function() {
+  const ids = {};
+  document.querySelectorAll('.modal').forEach(function(modal) {
+    const id = modal.id;
+    if (ids[id]) {
+      alert('Duplicate modal id found: ' + id);
+    } else {
+      ids[id] = true;
+    }
+  });
+});
+</script>
 </body>
 </html>
